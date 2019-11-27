@@ -1,0 +1,128 @@
+plugins {
+    id 'base'
+    id 'idea'
+
+    id 'java'
+    id 'application'
+
+    id 'jacoco'
+    id 'org.sonarqube' version '2.8'
+}
+
+// ::: Project metadata :::
+group 'br.dhsrocha'
+version '1.0.0'
+
+// Should follow wrapper version shipped into this project
+wrapper { gradleVersion '6.0.1' }
+
+ext {
+    moduleProd = 'coordinate.core'
+    moduleTest = 'coordinate.test'
+
+    junit_version = '5.5.2+'
+    junit_platform_version = '1.5.2+'
+
+    lombok_version = '1.18.10+'
+}
+
+repositories { mavenCentral() }
+
+dependencies {
+    // Test scope
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:' + junit_version
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:' + junit_version
+    testImplementation 'org.junit.platform:junit-platform-suite-api:' + junit_platform_version
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:' + junit_platform_version
+
+    // https://plugins.jetbrains.com/plugin/6317-lombok
+    compileOnly 'org.projectlombok:lombok:' + lombok_version
+    annotationProcessor 'org.projectlombok:lombok:' + lombok_version
+}
+
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
+
+// ::: Tasks :::
+
+defaultTasks 'clean', 'cleanIdea', 'cleanTest', 'idea', 'wrapper', 'build'
+
+application { mainClassName 'br.com.dhsrocha.swapi.Application' }
+
+// Compile
+
+compileJava {
+    inputs.property('moduleName', moduleProd)
+    doFirst {
+        options.compilerArgs = [
+                '--module-path', classpath.asPath,
+        ]
+        classpath = files()
+    }
+}
+
+// Test
+
+compileTestJava {
+    inputs.property('moduleName', moduleTest)
+    doFirst {
+        options.compilerArgs = [
+                '--module-path', classpath.asPath,
+                '--add-modules', 'org.junit.jupiter.api',
+                '--add-reads', "$moduleTest=org.junit.jupiter.api",
+                '--patch-module', "$moduleTest=" + files(sourceSets.test.java.srcDirs).asPath,
+        ]
+        classpath = files()
+    }
+}
+
+test {
+    useJUnitPlatform()
+    filter { exclude '**/module-info.class' }
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled Boolean.TRUE
+        html.enabled Boolean.TRUE
+        csv.enabled Boolean.TRUE
+    }
+}
+
+check.dependsOn jacocoTestReport
+
+// Packaging
+
+task depsJar(type: Jar) {
+    doFirst {
+
+        archiveBaseName = 'dependencies'
+
+        configurations { deps.extendsFrom implementation, runtimeOnly }
+
+        from { configurations.deps.collect { it.isDirectory() ? it : zipTree(it) } }
+    }
+}
+
+jar.dependsOn depsJar
+
+jar {
+    inputs.property('moduleName', moduleProd)
+
+    doFirst {
+        archiveBaseName = rootProject.name
+
+        manifest {
+            attributes 'Manifest-Version': 1.0
+            attributes 'Specification-Title': 'Coordinate Gist'
+            attributes 'Specification-Version': rootProject.version
+            attributes 'Specification-Vendor': rootProject.group
+            // attributes 'Implementation-Title': ''
+            // attributes 'Implementation-Version': ''
+            // attributes 'Implementation-Vendor': ''
+            attributes 'Main-Class': application.getMainClassName()
+            attributes 'Automatic-Module-Name': moduleProd
+            attributes 'Class-Path': depsJar.getArchiveFileName().get()
+        }
+    }
+}
