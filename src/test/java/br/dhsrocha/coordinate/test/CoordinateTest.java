@@ -7,8 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTimeout;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author <a href="mailto:dhsrocha@gmail.com">Diego Rocha</a>
@@ -25,11 +24,11 @@ final class CoordinateTest {
     // Assert
     assertTimeout(TIMEOUT_LIMIT, () -> {
       // Act
-      val coordinate = Coordinate.of(45, 45);
+      val result = Coordinate.of(45, 45);
       // Assert
-      assertEquals(45, coordinate.getLatitude());
+      assertEquals(45, result.getLatitude());
 
-      assertEquals(45, coordinate.getLongitude());
+      assertEquals(45, result.getLongitude());
     });
   }
 
@@ -37,8 +36,34 @@ final class CoordinateTest {
   @DisplayName("should create Origin with latitude longitude as double zero.")
   final void shouldCreate_origin_withLatitudeLongitude_asDoubleZero() {
     // Act / assert
-    Assertions.assertEquals(0, Coordinate.ORIGIN.getLatitude());
+    assertEquals(0, Coordinate.ORIGIN.getLatitude());
 
-    Assertions.assertEquals(0, Coordinate.ORIGIN.getLongitude());
+    assertEquals(0, Coordinate.ORIGIN.getLongitude());
+  }
+
+  @Test
+  @DisplayName("Should throw InvalidCoordinateException when latitude passes beyond 90 degrees.")
+  final void shouldThrow_invalidCoordinateException_whenLatitude_passesBeyond_90Degrees() {
+    // Assert / Act
+    assertDoesNotThrow(() -> Coordinate.of(-90, 0));
+
+    assertDoesNotThrow(() -> Coordinate.of(90, 0));
+
+    assertThrows(IllegalArgumentException.class, () -> Coordinate.of(-91, 0));
+
+    assertThrows(IllegalArgumentException.class, () -> Coordinate.of(91, 0));
+  }
+
+  @Test
+  @DisplayName("Should throw InvalidCoordinateException when longitude passes beyond 180 degrees.")
+  final void shouldThrow_invalidCoordinateException_whenLongitude_passesBeyond_180Degrees() {
+    // Assert / Act
+    assertDoesNotThrow(() -> Coordinate.of(0, -180));
+
+    assertDoesNotThrow(() -> Coordinate.of(0, 180));
+
+    assertThrows(IllegalArgumentException.class, () -> Coordinate.of(0, -181));
+
+    assertThrows(IllegalArgumentException.class, () -> Coordinate.of(0, 181));
   }
 }
