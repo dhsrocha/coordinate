@@ -1,14 +1,16 @@
 package br.dhsrocha.coordinate.test;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTimeout;
+
 import br.dhsrocha.coordinate.Coordinate;
+import java.time.Duration;
+import java.util.Set;
 import lombok.val;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.time.Duration;
-import java.util.Set;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author <a href="mailto:dhsrocha@gmail.com">Diego Rocha</a>
@@ -119,4 +121,26 @@ final class CoordinateTest {
     });
   }
 
+  @Test
+  @DisplayName("Should find the closest and the farthest.")
+  final void shouldFind_theNearest_and_theFarthest() {
+    // Arrange
+    val beijing = Coordinate.of(39.9075, 116.39723);
+
+    val paris = Coordinate.of(48.85341, 2.3488);
+
+    val ottawa = Coordinate.of(45.41117, -75.69812);
+
+    val canberra = Coordinate.of(-35.28346, 149.12807);
+
+    val brasilia = Coordinate.of(-15.77972, -47.92972);
+    // Act
+    val closest = brasilia.closest(beijing, paris, ottawa, canberra);
+
+    val farthest = brasilia.farthest(beijing, paris, ottawa, canberra);
+    // Assert
+    assertEquals(ottawa, closest);
+
+    assertEquals(beijing, farthest);
+  }
 }

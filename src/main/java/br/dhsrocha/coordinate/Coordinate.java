@@ -2,6 +2,7 @@ package br.dhsrocha.coordinate;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -87,5 +88,29 @@ public final class Coordinate {
       && Math.abs(longitude - destination.longitude) < 1e-3
       ? Calculation.HAVERSINE : Calculation.VICENTY;
     return c.fun.apply(this).apply(destination);
+  }
+
+  // ::: Closest / farthest
+
+  public final Coordinate farthest(final Coordinate... others) {
+    return sort(0, others.length - 1).apply(others, find(this, Boolean.FALSE));
+  }
+
+  public final Coordinate closest(final Coordinate... others) {
+    return sort(0, others.length - 1).apply(others, find(this, Boolean.TRUE));
+  }
+
+  // https://en.wikipedia.org/wiki/Closest_pair_of_points_problem
+  private static BiFunction<Coordinate[], BiFunction<Coordinate, Coordinate, Coordinate>, Coordinate>
+  sort(final int left, final int right) {
+    // Divide-and-conquer strategy, with the merging logic as a function parameter
+    return (array, operation) -> left == right ? array[left] : operation.apply(
+      sort(left, (left + right) / 2).apply(array, operation), // left
+      sort((left + right) / 2 + 1, right).apply(array, operation)); // right
+  }
+
+  private static <C extends Coordinate>
+  BiFunction<C, C, C> find(final C c, final boolean close) {
+    return (c1, c2) -> close ^ c.distanceTo(c1) > c.distanceTo(c2) ? c1 : c2;
   }
 }
