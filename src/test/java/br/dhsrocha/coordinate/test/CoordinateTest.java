@@ -105,4 +105,18 @@ final class CoordinateTest {
     });
   }
 
+  @Test
+  @DisplayName("Should measure distance from coordinates.")
+  final void shouldMeasure_distanceFrom_coordinates() {
+    // Assert
+    assertTimeout(TIMEOUT_LIMIT, () -> {
+      // Arrange
+      val result = Coordinate.of(45, 45)
+        // Act
+        .distanceTo(Coordinate.of(25, 25));
+      // Assert
+      assertEquals(2856265.061602412, result);
+    });
+  }
+
 }

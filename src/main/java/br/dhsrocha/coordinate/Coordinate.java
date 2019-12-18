@@ -1,16 +1,16 @@
 package br.dhsrocha.coordinate;
 
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.ToString;
 import lombok.Value;
 import lombok.val;
-
-import java.util.Objects;
-import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author <a href="mailto:dhsrocha@gmail.com">Diego Rocha</a>
@@ -60,5 +60,32 @@ public final class Coordinate {
   private static double toDoubleOrZero(final String number) {
     return Optional.of(number).filter(s -> !s.isEmpty())
       .map(Double::parseDouble).orElse(0.0);
+  }
+
+  // Features
+
+  // ::: Distance from
+
+  @NonNull
+  @AllArgsConstructor
+  private enum Calculation { // Output should result in meters
+    // https://rosettacode.org/wiki/Haversine_formula#Java
+    HAVERSINE(src -> tgt -> 2 * 6366707.0195 // Earth's radius
+      * Math.asin(Math.sqrt(Math.pow(1
+      * Math.sin(Math.toRadians(tgt.latitude - src.latitude) / 2), 2)
+      + Math.pow(Math.sin(Math.toRadians(tgt.longitude - src.longitude) / 2), 2)
+      * Math.cos(Math.toRadians(src.latitude))
+      * Math.cos(Math.toRadians(tgt.latitude))))),
+    // TODO
+    VICENTY(HAVERSINE.fun),
+    ;
+    private final Function<Coordinate, Function<Coordinate, Double>> fun;
+  }
+
+  public final double distanceTo(final Coordinate destination) {
+    val c = Math.abs(latitude - destination.latitude) < 1e-3
+      && Math.abs(longitude - destination.longitude) < 1e-3
+      ? Calculation.HAVERSINE : Calculation.VICENTY;
+    return c.fun.apply(this).apply(destination);
   }
 }
