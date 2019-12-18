@@ -6,6 +6,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -66,4 +67,42 @@ final class CoordinateTest {
 
     assertThrows(IllegalArgumentException.class, () -> Coordinate.of(0, 181));
   }
+
+  @Test
+  @DisplayName("Should parse 45.0125 degrees from valid string notation before 20 milliseconds.")
+  final void shouldParse_45_0125degrees_from_validStringNotation_before_20Millis() {
+    // Assert
+    assertTimeout(TIMEOUT_LIMIT, () -> {
+      // Act
+      val result = Coordinate.of("45°0'45\"N -45°45'0\"E");
+      // Assert
+      assertEquals(45.0125, result.getLatitude());
+
+      assertEquals(-45.75, result.getLongitude());
+    });
+  }
+
+  @Test
+  @DisplayName("Should throw IllegalArgumentException when passing malformed coordinate notation.")
+  final void shouldThrow_illegalArgumentException_whenPassing_malformedCoordinateNotation() {
+    // Arrange
+    Set.of(""
+      , "45°0'0\"N -45°0'0\""
+      , "45°0'0\" -45°0'0\"E"
+      , "45°0'0\"N,-45°0'0\"E"
+      , "45°0'\"N -45°0'0\"E"
+      , "45°'0\"N -45°0'0\"E"
+      , "°0'0\"N -45°0'0\"E"
+      , "45°0'0\"N -45°0'\"E"
+      , "45°0'0\"N -45°'0\"E"
+      , "45°0'0\"N -°0'0\"E"
+      // Act / Assert
+    ).parallelStream().forEach(input -> {
+
+      val ex = assertThrows(IllegalArgumentException.class, () -> Coordinate.of(input));
+
+      assertEquals("Malformed notation: " + input, ex.getMessage());
+    });
+  }
+
 }
