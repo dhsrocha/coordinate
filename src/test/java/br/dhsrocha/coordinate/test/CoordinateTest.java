@@ -101,7 +101,8 @@ final class CoordinateTest {
       // Act / Assert
     ).parallelStream().forEach(input -> {
 
-      val ex = assertThrows(IllegalArgumentException.class, () -> Coordinate.of(input));
+      val ex = assertThrows(IllegalArgumentException.class,
+        () -> Coordinate.of(input));
 
       assertEquals("Malformed notation: " + input, ex.getMessage());
     });
@@ -142,5 +143,22 @@ final class CoordinateTest {
     assertEquals(ottawa, closest);
 
     assertEquals(beijing, farthest);
+  }
+
+  @Test
+  @DisplayName("Should return route sum.")
+  final void shouldReturn_routSum() {
+    // Arrange
+    val c1 = Coordinate.of(5, 5);
+
+    val c2 = Coordinate.of(10, 10);
+
+    val c3 = Coordinate.of(15, 15);
+    // Act / Assert
+    assertEquals(Coordinate.
+        ORIGIN.distanceTo(c1)
+        + c1.distanceTo(c2)
+        + c2.distanceTo(c3)
+      , Coordinate.ORIGIN.routeTo(c3, c1, c2).distance());
   }
 }

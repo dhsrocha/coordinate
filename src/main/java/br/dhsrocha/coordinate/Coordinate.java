@@ -2,6 +2,7 @@ package br.dhsrocha.coordinate;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Random;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -112,5 +113,91 @@ public final class Coordinate {
   private static <C extends Coordinate>
   BiFunction<C, C, C> find(final C c, final boolean close) {
     return (c1, c2) -> close ^ c.distanceTo(c1) > c.distanceTo(c2) ? c1 : c2;
+  }
+
+  // ::: Route to
+
+  // https://www.baeldung.com/java-simulated-annealing-for-traveling-salesman
+  public final Route routeTo(final Coordinate... others) {
+    // TODO: should be with the instance in the first position
+
+    // set initial  temp
+    var temp = 100000;
+
+    // create random initial solution
+    var currentSolution = Route.of(others);
+
+    // We would like to keep track if the best solution
+    // Assume best solution is the current solution
+    var best = Route.of(currentSolution.coordinates);
+
+    // Loop until system has cooled
+    while (temp > 1) {
+      // Create new neighbour tour
+      val newSolution = Route.of(currentSolution.coordinates);
+
+      // Get random positions in the tour
+      val tourPos1 = Route.SEED.nextInt(newSolution.coordinates.length);
+      var tourPos2 = Route.SEED.nextInt(newSolution.coordinates.length);
+
+      //to make sure that tourPos1 and tourPos2 are different
+      while (tourPos1 == tourPos2) {
+        tourPos2 = Route.SEED.nextInt(newSolution.coordinates.length);
+      }
+
+      // Get the cities at selected positions in the tour
+      val c1 = newSolution.coordinates[tourPos1];
+      val c2 = newSolution.coordinates[tourPos2];
+
+      // Swap them
+      newSolution.coordinates[tourPos2] = c1;
+      newSolution.coordinates[tourPos1] = c2;
+
+      // Get energy of solutions
+      val current = currentSolution.distance();
+      val neighbour = newSolution.distance();
+
+      // Decide if we should accept the neighbour
+      if (Route.acceptance(current, neighbour, temp) > Route.SEED.nextInt()) {
+        currentSolution = Route.of(newSolution.coordinates);
+      }
+
+      // Keep track of the best solution found
+      if (currentSolution.distance() < best.distance()) {
+        best = Route.of(currentSolution.coordinates);
+      }
+
+      // Cool system
+      temp *= 1 - Route.COOLING_RATE;
+    }
+    return best;
+  }
+
+  @NonNull
+  @AllArgsConstructor(staticName = "of", access = AccessLevel.PACKAGE)
+  public static class Route {
+
+    private static final Random SEED = new Random();
+    private static final double COOLING_RATE = 0.003;
+
+    private final Coordinate[] coordinates;
+
+    // https://en.wikipedia.org/wiki/Centroid#Of_a_finite_set_of_points
+    public final double distance() {
+      var sumX = 0.0;
+      var sumY = 0.0;
+      for (val c : coordinates) {
+        sumX += c.latitude;
+        sumY += c.longitude;
+      }
+      return Coordinate.ORIGIN.distanceTo(Coordinate.of(
+        sumX / coordinates.length,
+        sumY / coordinates.length));
+    }
+
+    private static double acceptance
+      (final double current, final double newTemp, final double temp) {
+      return newTemp < current ? 1.0 : Math.exp((current - newTemp) / temp);
+    }
   }
 }
