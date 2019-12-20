@@ -32,4 +32,13 @@ final class CoordinateTest {
       assertEquals(45, coordinate.getLongitude());
     });
   }
+
+  @Test
+  @DisplayName("should create Origin with latitude longitude as double zero.")
+  final void shouldCreate_origin_withLatitudeLongitude_asDoubleZero() {
+    // Act / assert
+    Assertions.assertEquals(0, Coordinate.ORIGIN.getLatitude());
+
+    Assertions.assertEquals(0, Coordinate.ORIGIN.getLongitude());
+  }
 }

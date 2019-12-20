@@ -15,6 +15,8 @@ import lombok.Value;
 @AllArgsConstructor(staticName = "of")
 public final class Coordinate {
 
+  public static final Coordinate ORIGIN = of(0, 0);
+
   double latitude;
   double longitude;
 }
